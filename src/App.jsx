@@ -4,7 +4,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import HomePage from "./pages/HomePage/HomePage";
 import EventById from "./pages/EventById";
 import ShowAlbumPage from "./pages/ShowAlbumPage";
-import ControlPanel from "./pages/ControlPanelPage";
+import ControlPanelPage from "./pages/ContorlPanelPage/ControlPanelPage";
 import ContactUs from "./pages/ContactUs/ContactUs";
 import UploadPhotosForm from "./components/UploadPhotosForm/UploadPhotosForm";
 
@@ -28,7 +28,7 @@ function App() {
 
 
           <Route element={<PrivateRoutes logged={isLogged} />}>
-              <Route path="/controlpanel" element={<ControlPanel/>} />
+              <Route path="/controlpanel" element={<ControlPanelPage/>} />
               <Route path="/event/:event_id" element={<EventById/>} />
               <Route path="/showalbum/:event_id" element={<ShowAlbumPage/>} />
               <Route path="/upload/" element={<UploadPhotosForm/>} />
