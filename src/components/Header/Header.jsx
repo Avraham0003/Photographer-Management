@@ -18,6 +18,8 @@ import { HiMenuAlt3 as Menu, HiHome, HiOutlineAnnotation, HiOutlinePresentationC
 import React, { useContext } from 'react'
 import MainLogoPhoto from './MainLogo.png'
 import UserContext from '../../context/UserContext';
+import { Navigate } from 'react-router-dom';
+
 function Header() {
   const { userData, logout, isLogged } = useContext(UserContext);
   const menu_button_style = {
