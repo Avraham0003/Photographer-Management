@@ -13,23 +13,17 @@ import { TabPanel, TabPanels, Tab, TabList, Tabs, Heading, Box, Icon, Spinner, C
 function ShowAlbumPage() {
   // parameters ==>
   const { event_id } = useParams();
-  const [eventPhotos, setEventPhotos] = useState([]);
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   //Ordered Photos:
-  const [allPhotos, setAllPhotos] = useState([]);
-  const [disabledPhotos, setDisabledPhotos] = useState([]);
-  const [selectedPhotos, setSelectedPhotos] = useState([]);
-  //==>
 
-  // Style ==>
-  const buttongroup_style = {
-    display: 'flex',
-    height: '130px',
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
-  //==>
+  const [images, setImages] = useState({
+    allPhotos: [],
+    disabledPhotos: [],
+    selectedPhotos: []
+  });
 
   // Functions ==>
 
@@ -37,11 +31,17 @@ function ShowAlbumPage() {
     try {
       setLoading(true);
       const response = await axios.get(import.meta.env.VITE_SERVER_URL + `/photos/get_photos_by_event_id/${event_id}`);
-      setEventPhotos(response.data.photos);
+
+      setImages({
+        allPhotos: response.data.allPhotos,
+        selectedPhotos: response.data.photosToDevelop,
+        disabledPhotos: response.data.disabledPhotos
+      });
+
     } catch (error) {
-      console.error('Error retrieving event details:', error);
+      setError(error.response.data.error)
       throw error;
-    }finally { 
+    } finally {
       setLoading(false);
     }
   }
@@ -52,23 +52,25 @@ function ShowAlbumPage() {
     try {
       const photo_id = id;
       const selected = changeto;
-
-      await axios.post(import.meta.env.VITE_SERVER_URL + `/photos/toggledisable/`, {
+  
+      const { data } = await axios.post(import.meta.env.VITE_SERVER_URL + `/photos/toggledisable/`, {
         photo_id,
         changeto: selected
       });
-      if (selected) {
-        toast.success('התמונה הוסתרה');
-      } else {
-        toast.success('התמונה שוחזרה');
-      }
-      getEventPhotos(event_id);
-
+  
+      setImages(prevImages => ({
+        ...prevImages,
+        disabledPhotos: prevImages.disabledPhotos.map(photo =>
+          photo._id === photo_id ? { ...photo, is_disabled: selected } : photo
+        )
+      }));
+  
+      toast.success(data.message);
     } catch (error) {
-      console.error('Error retrieving photo details:', error);
-      throw error;
+      toast.error(error.response.data.error);
     }
   }
+  
 
   //==================================
 
@@ -103,35 +105,9 @@ function ShowAlbumPage() {
 
   useEffect(() => {
     getEventPhotos(event_id);
-  }, [event_id]);
+  }, []);
 
-  useEffect(() => {
-    if (eventPhotos) {
-      setLoading(true);
-      setAllPhotos([]);
-      setSelectedPhotos([]);
-      setDisabledPhotos([]);
-  
-      Promise.all(eventPhotos.map(async (photo) => {
-        if (photo.disabled) {
-          setDisabledPhotos(disabledPhotos => [...disabledPhotos, { name: photo._id, src: import.meta.env.VITE_SERVER_URL + '/' + photo.photo_link, is_selected: photo.is_selected, disabled: photo.disabled }]);
-        } else {
-          setAllPhotos(allPhotos => [...allPhotos, { name: photo._id, src: import.meta.env.VITE_SERVER_URL + '/' + photo.photo_link, is_selected: photo.is_selected, disabled: photo.disabled }]);
-        }
-        if (photo.is_selected) {
-          setSelectedPhotos(selectedPhotos => [...selectedPhotos, { name: photo._id, src: import.meta.env.VITE_SERVER_URL + '/' + photo.photo_link, is_selected: photo.is_selected, disabled: photo.disabled }]);
-        }
-      }))
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error retrieving photo details:', error);
-        setLoading(false);
-      });
-    }
-  }, [eventPhotos]);
-  
+
 
   //==================================
 
@@ -147,31 +123,35 @@ function ShowAlbumPage() {
         emptyColor='gray.200'
         color='blue.500'
         size='xl'
-      /></Center> : <Tabs isFitted variant='enclosed'>
+      /></Center> : null}
+
+      {error ? <Center>{error}</Center> : null}
+
+      {!loading && !error ? <Tabs isFitted variant='enclosed'>
         <TabList mb='1em'>
-          <Tab padding={3} _hover={{ color: 'white', bg: 'blue.200' }} _selected={{ color: 'white', bg: 'blue.500' }} fontWeight={'bold'}>כל התמונות [{allPhotos.length}]</Tab>
-          <Tab padding={3} _hover={{ color: 'white', bg: 'purple.200' }} _selected={{ color: 'white', bg: 'purple.500' }} fontWeight={'bold'}>תמונות לפיתוח [{selectedPhotos.length}]</Tab>
-          <Tab padding={3} _hover={{ color: 'white', bg: 'red.200' }} _selected={{ color: 'white', bg: 'red.500' }} fontWeight={'bold'}>תמונות מוסתרות [{disabledPhotos.length}]</Tab>
+          <Tab padding={3} _hover={{ color: 'white', bg: 'blue.200' }} _selected={{ color: 'white', bg: 'blue.500' }} fontWeight={'bold'}>כל התמונות [{images.allPhotos.length}]</Tab>
+          <Tab padding={3} _hover={{ color: 'white', bg: 'purple.200' }} _selected={{ color: 'white', bg: 'purple.500' }} fontWeight={'bold'}>תמונות לפיתוח [{images.selectedPhotos.length}]</Tab>
+          <Tab padding={3} _hover={{ color: 'white', bg: 'red.200' }} _selected={{ color: 'white', bg: 'red.500' }} fontWeight={'bold'}>תמונות מוסתרות [{images.disabledPhotos.length}]</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>
             <Heading>כל התמונות</Heading>
-            <Gallery toggleDisable={toggleDisable} is_selected_change={is_selected_change} downloadImage={downloadImage} images={allPhotos} />
+            <Gallery toggleDisable={toggleDisable} is_selected_change={is_selected_change} downloadImage={downloadImage} images={images.allPhotos} />
           </TabPanel>
 
           <TabPanel>
-            {selectedPhotos.length > 0 && <><Heading>תמונות לפיתוח</Heading> <Gallery is_selected_change={is_selected_change} downloadImage={downloadImage} images={selectedPhotos} /> </>}
-            {selectedPhotos.length == 0 && <Box w={'100%'} px={10} textAlign={'center'} fontSize={'50px'} fontWeight={'bold'}>אין תמונות לפיתוח<Icon display={'inline'} as={HiOutlineExclamationCircle} /> </Box>}
+            {images.selectedPhotos.length > 0 && <><Heading>תמונות לפיתוח</Heading> <Gallery is_selected_change={is_selected_change} downloadImage={downloadImage} images={images.selectedPhotos} /> </>}
+            {images.selectedPhotos.length == 0 && <Box w={'100%'} px={10} textAlign={'center'} fontSize={'50px'} fontWeight={'bold'}>אין תמונות לפיתוח<Icon display={'inline'} as={HiOutlineExclamationCircle} /> </Box>}
 
 
           </TabPanel>
 
           <TabPanel>
-            {disabledPhotos.length > 0 && <><Heading>תמונות מוסתרות</Heading><Gallery is_selected_change={is_selected_change} downloadImage={downloadImage} toggleDisable={toggleDisable} images={disabledPhotos} /></>}
-            {disabledPhotos.length == 0 && <Box w={'100%'} px={10} textAlign={'center'} fontSize={'50px'} fontWeight={'bold'}>אין תמונות מוסתרות<Icon display={'inline'} as={HiOutlineExclamationCircle} /> </Box>}
+            {images.disabledPhotos.length > 0 && <><Heading>תמונות מוסתרות</Heading><Gallery is_selected_change={is_selected_change} downloadImage={downloadImage} toggleDisable={toggleDisable} images={images.disabledPhotos} /></>}
+            {images.disabledPhotos.length == 0 && <Box w={'100%'} px={10} textAlign={'center'} fontSize={'50px'} fontWeight={'bold'}>אין תמונות מוסתרות<Icon display={'inline'} as={HiOutlineExclamationCircle} /> </Box>}
           </TabPanel>
         </TabPanels>
-      </Tabs>}
+      </Tabs> : null}
     </>
   );
 }
