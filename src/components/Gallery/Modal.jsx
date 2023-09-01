@@ -124,22 +124,45 @@ const Modal = ({ isOpen, onClose, images, initialImageIndex }) => {
           />
         </Center>
         <ButtonGroup sx={{ buttongroup_style }} spacing='3' alignContent='bottom'>
-          <Tooltip label="הוסף לפיתוח">
-            <Button colorScheme='purple' onClick={() => is_selected_change(photo.name, photo.is_selected)}><HiOutlineCollection /></Button>
-          </Tooltip>
-          <Tooltip label="הסר מפיתוח">
-            <Button colorScheme='purple' onClick={() => is_selected_change(photo.name, photo.is_selected)}><HiX /></Button>
-          </Tooltip>
-          <Tooltip label="הורד תמונה">
-            <Button colorScheme="green" onClick={() => downloadImage(photo.src)}>
-              <HiDownload />
-            </Button>
-          </Tooltip>
-          <Tooltip label="הסתר תמונה">
-            <Button colorScheme="red" onClick={() => confirm('Are you sure?')}>
-              <HiOutlineEyeOff />
-            </Button>
-          </Tooltip>
+
+        <Tooltip
+                      label={photo.is_selected ? "הסר מפיתוח" : "הוסף לפיתוח"}
+                    >
+                      <Button
+                        colorScheme="purple"
+                        onClick={() =>
+                          toggleSelected(photo._id, !photo.is_selected)
+                        }
+                      >
+                        {photo.is_selected ? <HiX /> : <HiOutlineCollection />}
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip label="הורד תמונה">
+                      <Button
+                        colorScheme="green"
+                        onClick={() => downloadImage(photo.src)}
+                      >
+                        <HiDownload />
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip
+                      label={photo.disabled ? "שחזר תמונה" : "הסתר תמונה"}
+                    >
+                      <Button
+                        colorScheme="red"
+                        onClick={() =>
+                          toggleDisable(photo.name, !photo.disabled)
+                        }
+                      >
+                        {photo.disabled ? (
+                          <HiOutlineReply />
+                        ) : (
+                          <HiOutlineEyeOff />
+                        )}
+                      </Button>
+                    </Tooltip>
         </ButtonGroup>
       </div>
       <button
