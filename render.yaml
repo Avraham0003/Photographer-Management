@@ -1,9 +1,0 @@
-services:
-- type: web
-  name: your-service-name
-  env: node
-  buildCommand: npm install
-  startCommand: npm start
-  envVars:
-  - key: NODE_VERSION
-    value: 16 # or any version that supports timers/promises
