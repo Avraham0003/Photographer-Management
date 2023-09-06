@@ -1,14 +1,26 @@
-import { Center, Image, Button ,ButtonGroup,Tooltip} from "@chakra-ui/react";
+import { Center, Image, Button, ButtonGroup, Tooltip } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
-import { HiChevronRight, HiOutlineX, HiChevronLeft,HiDownload, HiOutlineEyeOff, HiOutlineCollection, HiX  } from "react-icons/hi";
+import { saveAs } from "file-saver";
+
+import {
+  HiChevronRight,
+  HiOutlineX,
+  HiChevronLeft,
+  HiDownload,
+  HiOutlineEyeOff,
+  HiOutlineCollection,
+  HiX,
+  HiOutlineEye,
+  HiOutlineReply,
+} from "react-icons/hi";
 
 const buttongroup_style = {
-  display: 'flex',
-  height: '130px',
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0,0,0,1)'
-}
+  display: "flex",
+  height: "130px",
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0,0,0,1)",
+};
 
 const modalStyles = {
   modal: {
@@ -21,7 +33,7 @@ const modalStyles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 9999,
+    zIndex: 1300,
   },
   modalContent: {
     position: "relative",
@@ -55,7 +67,7 @@ const modalStyles = {
     padding: "8px 16px",
     cursor: "pointer",
     fontSize: "55px",
-    color: "white"
+    color: "white",
   },
   image: {
     maxWidth: "85%",
@@ -65,104 +77,139 @@ const modalStyles = {
   },
 };
 
-const Modal = ({ isOpen, onClose, images, initialImageIndex }) => {
+const Modal = ({
+  isOpen,
+  onClose,
+  images,
+  initialImageIndex,
+  movingToggleDisable,
+  movingToggleSelected,
+}) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+
   useEffect(() => {
     setCurrentImageIndex(initialImageIndex || 0);
   }, [initialImageIndex]);
-  
+
   const handlePreviousImage = () => {
     setCurrentImageIndex((prevIndex) =>
-    prevIndex === 0 ? images.length - 1 : prevIndex - 1
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
     );
   };
-  
+
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) =>
-    prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
     );
   };
-  
+
   const handleOutsideClick = (event) => {
     if (event.target === event.currentTarget) {
       onClose();
     }
   };
-  
+
   const handleImageClick = () => {
     handleNextImage();
   };
-  
+
+  const downloadImage = (image) => {
+    saveAs(image, image); // Put your image url here.
+  };
+
   useEffect(() => {
-    document.addEventListener('keydown', (event) => {
-      if(event.key === 'ArrowRight'){
-        handleNextImage();
-      }else if(event.key === 'ArrowLeft'){
-        handlePreviousImage();
-      }
-    },true);
-  },[]);
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "ArrowRight") {
+          handleNextImage();
+        } else if (event.key === "ArrowLeft") {
+          handlePreviousImage();
+        }
+      },
+      true
+    );
+  }, []);
 
   if (!isOpen) {
     return null;
   }
-  
+
   return (
     <div style={modalStyles.modal} onClick={handleOutsideClick}>
       <div style={modalStyles.modalContent}>
         <Center px={["10%", "5%"]}>
-          <Image
-            objectFit="cover"
-            src={images[currentImageIndex].src}
-            alt={`Image ${currentImageIndex + 1}`}
-            style={{
-              ...modalStyles.image,
-              transform: "scale(1.5)",
-            }}
-            onClick={handleImageClick}
-          />
+            <Image
+              objectFit="cover"
+              src={images[currentImageIndex].src}
+              alt={`Image ${currentImageIndex + 1}`}
+              style={{
+                ...modalStyles.image,
+                transform: "scale(1.5)",
+              }}
+              onClick={handleImageClick}
+              loading="lazy"
+            />
         </Center>
-        <ButtonGroup sx={{ buttongroup_style }} spacing='3' alignContent='bottom'>
+        <ButtonGroup
+          sx={{ buttongroup_style }}
+          spacing="3"
+          alignContent="bottom"
+        >
+          <Tooltip
+            label={
+              images[currentImageIndex].is_selected
+                ? "הסר מפיתוח"
+                : "הוסף לפיתוח"
+            }
+          >
+            <Button
+              colorScheme="purple"
+              onClick={() =>
+                movingToggleSelected(
+                  images[currentImageIndex].name,
+                  !images[currentImageIndex].disabled
+                )
+              }
+            >
+              {images[currentImageIndex].is_selected ? (
+                <HiX />
+              ) : (
+                <HiOutlineCollection />
+              )}
+            </Button>
+          </Tooltip>
 
-        <Tooltip
-                      label={photo.is_selected ? "הסר מפיתוח" : "הוסף לפיתוח"}
-                    >
-                      <Button
-                        colorScheme="purple"
-                        onClick={() =>
-                          toggleSelected(photo._id, !photo.is_selected)
-                        }
-                      >
-                        {photo.is_selected ? <HiX /> : <HiOutlineCollection />}
-                      </Button>
-                    </Tooltip>
+          <Tooltip label="הורד תמונה">
+            <Button
+              colorScheme="green"
+              onClick={() => downloadImage(images[currentImageIndex].src)}
+            >
+              <HiDownload />
+            </Button>
+          </Tooltip>
 
-                    <Tooltip label="הורד תמונה">
-                      <Button
-                        colorScheme="green"
-                        onClick={() => downloadImage(photo.src)}
-                      >
-                        <HiDownload />
-                      </Button>
-                    </Tooltip>
-
-                    <Tooltip
-                      label={photo.disabled ? "שחזר תמונה" : "הסתר תמונה"}
-                    >
-                      <Button
-                        colorScheme="red"
-                        onClick={() =>
-                          toggleDisable(photo.name, !photo.disabled)
-                        }
-                      >
-                        {photo.disabled ? (
-                          <HiOutlineReply />
-                        ) : (
-                          <HiOutlineEyeOff />
-                        )}
-                      </Button>
-                    </Tooltip>
+          <Tooltip
+            label={
+              images[currentImageIndex].disabled ? "שחזר תמונה" : "הסתר תמונה"
+            }
+          >
+            <Button
+              colorScheme="red"
+              onClick={() =>
+                movingToggleDisable(
+                  images[currentImageIndex].name,
+                  !images[currentImageIndex].disabled
+                )
+              }
+            >
+              {images[currentImageIndex].disabled ? (
+                <HiOutlineReply />
+              ) : (
+                <HiOutlineEyeOff />
+              )}
+            </Button>
+          </Tooltip>
         </ButtonGroup>
       </div>
       <button

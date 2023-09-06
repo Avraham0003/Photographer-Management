@@ -9,6 +9,11 @@ import { HiOutlineTrash, HiOutlineLink } from 'react-icons/hi'
 import UploadPhotosForm from '../components/UploadPhotosForm/UploadPhotosForm';
 import EditEvent from '../components/EditEventForm/EditEvent';
 import { toast } from 'react-toastify';
+import { getImagesByEventId } from "../redux/slices/imagesSlices";
+import { useDispatch, useSelector } from 'react-redux';
+
+
+
 async function getEventDetails(event_id) {
   try {
     const response = await axios.get(import.meta.env.VITE_SERVER_URL+`/events/get_by_id/${event_id}`);
@@ -30,10 +35,12 @@ const formatDate = (inputDate) => {
 
 function EventById() {
 
-  const [eventData, setEventData] = useState(null);
 
-  
+  const [eventData, setEventData] = useState(null);
+  const dispatch  = useDispatch();
   const navigate = useNavigate();
+  const {loading, error, images} = useSelector((store) => store.imagesSlice);
+
   function deleteClick() {
     if(confirm('האם אתה בטוח שברצונך למחוק את האירוע ?')){
       
@@ -62,7 +69,14 @@ function EventById() {
       setFormatedDate(formatDate(eventData.event_date));
     }
   },[eventData])
-  
+  useEffect(() => {
+
+    if(event_id) {
+      if(!images) {
+        dispatch(getImagesByEventId(event_id));
+      }
+    }
+  }, [event_id]);
     
 
   return (

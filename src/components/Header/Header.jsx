@@ -52,7 +52,8 @@ function Header() {
         <Flex align="center" justify="space-between" >
           <Box onClick={onOpen} sx={menu_button_style} ><Menu /></Box>
           <Box>
-            <Image src={MainLogoPhoto} alt="Logo" h={8} />
+            <Image src={MainLogoPhoto} loading='lazy'  alt="Logo" h={8} />
+
           </Box>
         </Flex>
       </Box>
